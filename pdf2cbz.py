@@ -33,10 +33,10 @@ def select_output_path():
 
 def convert():
     if input_path.get() == "":
-        messagebox.showerror("Error", "Please select input path")
+        messagebox.showerror("Error", "Please select input PDF")
         return
     if output_path.get() == "":
-        messagebox.showerror("Error", "Please select output path")
+        messagebox.showerror("Error", "Please select output CBZ")
         return
     convert_pdf_to_cbz(input_path.get(), output_path.get())
     messagebox.showinfo("Done", "Conversion completed")
@@ -47,7 +47,7 @@ def about():
 
 
 def help():
-    messagebox.showinfo("Help", "1. Select input folder\n2. Select output folder\n3. Click convert")
+    messagebox.showinfo("Help", "1. Select input PDF\n2. Select output CBZ\n3. Click convert")
 
 
 # Menu

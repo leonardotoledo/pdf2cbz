@@ -1,1 +1,2 @@
 PyMuPDF == 1.23.16
+pyinstaller == 6.3.0
