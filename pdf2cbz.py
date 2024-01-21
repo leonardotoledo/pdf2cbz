@@ -67,8 +67,8 @@ menu_bar.add_cascade(label="Help", menu=help_menu)
 
 # GUI
 # ---
-# Input path
-input_path_label = Label(root, text="Input path")
+# Input file
+input_path_label = Label(root, text="Input PDF")
 input_path_label.grid(row=0, column=0, padx=10, pady=10, sticky="W")
 
 input_path_entry = Entry(root, textvariable=input_path, width=50)
@@ -78,7 +78,7 @@ input_path_button = Button(root, text="Select", command=select_input_path)
 input_path_button.grid(row=0, column=2, padx=10, pady=10, sticky="W")
 
 # Output path
-output_path_label = Label(root, text="Output path")
+output_path_label = Label(root, text="Output CBZ")
 output_path_label.grid(row=1, column=0, padx=10, pady=10, sticky="W")
 
 output_path_entry = Entry(root, textvariable=output_path, width=50)
