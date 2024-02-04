@@ -1,2 +1,4 @@
 PyMuPDF == 1.23.16
 pyinstaller == 6.3.0
+python-tkdnd == 0.2.1
+tqdm == 4.66.1

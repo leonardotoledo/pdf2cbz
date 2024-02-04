@@ -1,96 +1,128 @@
+import os.path
 import tkinter as tk
+import tkinterdnd2 as tkdnd
+from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
-from tkinter import Menu
-from tkinter import Label
-from tkinter import Button
-from tkinter import Entry
-from tkinter import StringVar
+from tqdm import tqdm
 from converter import convert_pdf_to_cbz
 
-# Global variables
-# ----------------
-# GUI
-root = tk.Tk()
-root.title("pdf2cbz")
-root.geometry("620x160")
-root.resizable(False, False)
 
-# Variables
-input_path = StringVar()
-output_path = StringVar()
+class ProgressDialog(tk.Toplevel):
+    def __init__(self, parent, max_value):
+        super().__init__(parent)
+        self.title("Progress")
+        self.geometry("300x100")
+        self.progress_var = tk.DoubleVar()
+        self.progressbar = ttk.Progressbar(self, orient="horizontal", length=200, mode="determinate",
+                                           variable=self.progress_var, maximum=max_value)
+        self.progressbar.pack(pady=20)
+        self.update_idletasks()
 
+    def step(self, value=1):
+        self.progress_var.set(self.progress_var.get() + value)
+        self.update_idletasks()
 
-# Functions
-# ---------
-def select_input_path():
-    input_path.set(filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")]))
-
-
-def select_output_path():
-    output_path.set(filedialog.asksaveasfilename(filetypes=[("CBZ files", "*.cbz")]))
+    def destroy(self):
+        super().destroy()
 
 
-def convert():
-    if input_path.get() == "":
-        messagebox.showerror("Error", "Please select input PDF")
-        return
-    if output_path.get() == "":
-        messagebox.showerror("Error", "Please select output CBZ")
-        return
-    convert_pdf_to_cbz(input_path.get(), output_path.get())
-    messagebox.showinfo("Done", "Conversion completed")
+class App:
+
+    def __init__(self, rt):
+        self.root = rt
+        self.root.title("pdf2cbz")
+        self.current_index = None
+        self.file_list = []
+
+        # Menu
+        # ----
+        menu_bar = tk.Menu(self.root)
+        self.root.config(menu=menu_bar)
+
+        file_menu = tk.Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label="Exit", command=root.quit)
+        menu_bar.add_cascade(label="File", menu=file_menu)
+
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu.add_command(label="Help", command=self.help)
+        help_menu.add_command(label="About", command=self.about)
+
+        menu_bar.add_cascade(label="Help", menu=help_menu)
+
+        # Add Button
+        # -------
+        self.add_button = tk.Button(self.root, text="+", command=self.add_file)
+        self.add_button.pack(pady=5)
+
+        # ListBox
+        # -------
+        self.listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE)
+        self.listbox.pack(fill=tk.BOTH, expand=True)
+
+        # Convert Button
+        # -------
+        self.convert_button = tk.Button(rt, text="Convert", command=self.convert)
+        self.convert_button.pack(pady=5)
+
+        # Enable drag and drop
+        # -------
+        self.listbox.drop_target_register(tkdnd.DND_FILES)
+        self.listbox.dnd_bind("<<Drop>>", self.drop_event)
+
+    def add_file(self):
+        filename = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf *.PDF")])
+        if filename:
+            self.file_list.append(filename)
+            self.update_listbox()
+
+    def update_listbox(self):
+        # Clear listbox
+        self.listbox.delete(0, tk.END)
+        # Insert filenames
+        for filename in self.file_list:
+            self.listbox.insert(tk.END, filename)
+
+    def drop_event(self, event):
+        # Split the items inside {} in event.data
+        filename = ""
+        for c in event.data:
+            if c == "{":
+                filename = ""
+            elif c == "}":
+                # Check if the file is a PDF
+                if filename.endswith(".pdf") or filename.endswith(".PDF"):
+                    self.file_list.append(filename)
+                else:
+                    filename = ""
+                    messagebox.showwarning("Warning", "Only PDF files are supported")
+            else:
+                filename += c
+
+        # Update the listbox
+        self.update_listbox()
+
+    def convert(self):
+        progress_dialog = ProgressDialog(self.root, len(self.file_list))
+        for filename in tqdm(self.file_list):
+            output_path = os.path.splitext(filename)[0] + ".cbz"
+            convert_pdf_to_cbz(filename, output_path)
+            progress_dialog.step()
+        progress_dialog.destroy()
+        self.file_list = []
+        self.update_listbox()
+        messagebox.showinfo("Info", "Conversion finished")
+
+    @staticmethod
+    def about():
+        messagebox.showinfo("About", "pdf2cbz v1.0\n\nCreated by: leonardotoledo")
+
+    @staticmethod
+    def help():
+        messagebox.showinfo("Help", "1. Insert or drag PDF files\n2. Click convert")
 
 
-def about():
-    messagebox.showinfo("About", "pdf2cbz v1.0\n\nCreated by: leonardotoledo")
-
-
-def help():
-    messagebox.showinfo("Help", "1. Select input PDF\n2. Select output CBZ\n3. Click convert")
-
-
-# Menu
-# ----
-menu_bar = Menu(root)
-root.config(menu=menu_bar)
-
-file_menu = Menu(menu_bar, tearoff=0)
-file_menu.add_command(label="Exit", command=root.quit)
-menu_bar.add_cascade(label="File", menu=file_menu)
-
-help_menu = Menu(menu_bar, tearoff=0)
-help_menu.add_command(label="Help", command=help)
-help_menu.add_command(label="About", command=about)
-
-menu_bar.add_cascade(label="Help", menu=help_menu)
-
-# GUI
-# ---
-# Input file
-input_path_label = Label(root, text="Input PDF")
-input_path_label.grid(row=0, column=0, padx=10, pady=10, sticky="W")
-
-input_path_entry = Entry(root, textvariable=input_path, width=50)
-input_path_entry.grid(row=0, column=1, padx=10, pady=10, sticky="W")
-
-input_path_button = Button(root, text="Select", command=select_input_path)
-input_path_button.grid(row=0, column=2, padx=10, pady=10, sticky="W")
-
-# Output path
-output_path_label = Label(root, text="Output CBZ")
-output_path_label.grid(row=1, column=0, padx=10, pady=10, sticky="W")
-
-output_path_entry = Entry(root, textvariable=output_path, width=50)
-output_path_entry.grid(row=1, column=1, padx=10, pady=10, sticky="W")
-
-output_path_button = Button(root, text="Select", command=select_output_path)
-output_path_button.grid(row=1, column=2, padx=10, pady=10, sticky="W")
-
-# Convert button
-convert_button = Button(root, text="Convert", command=convert)
-convert_button.grid(row=2, column=1, padx=10, pady=10, sticky="W")
-
-# Main loop
-# ---------
-root.mainloop()
+if __name__ == "__main__":
+    root = tkdnd.Tk()
+    app = App(root)
+    root.mainloop()

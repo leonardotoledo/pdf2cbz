@@ -1,3 +1,5 @@
+import io
+
 import fitz  # PyMuPDF
 from PIL import Image
 import os
@@ -10,8 +12,8 @@ from concurrent.futures import ThreadPoolExecutor
 def convert_page_to_image(page, page_number, temp_dir):
     image = page.get_pixmap()
     pil_image = Image.frombytes("RGB", (image.width, image.height), image.samples)
-    image_path = os.path.join(temp_dir, f"page_{page_number + 1}.png")
-    pil_image.save(image_path)
+    image_path = os.path.join(temp_dir, f"page_{page_number + 1}.jpg")
+    pil_image.save(image_path, "JPEG")
 
 
 def convert_pdf_to_cbz(pdf_path, cbz_path):
