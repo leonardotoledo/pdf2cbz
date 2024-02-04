@@ -53,17 +53,22 @@ class App:
         # Add Button
         # -------
         self.add_button = tk.Button(self.root, text="+", command=self.add_file)
-        self.add_button.pack(pady=5)
+        self.add_button.pack(padx=5, anchor=tk.NW, pady=5, side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Clear All Button
+        # -------
+        self.clear_button = tk.Button(self.root, text="Clear All", command=self.clear_list)
+        self.clear_button.pack(padx=5, anchor=tk.NE, pady=5, side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # ListBox
         # -------
-        self.listbox = tk.Listbox(self.root, selectmode=tk.MULTIPLE)
+        self.listbox = tk.Listbox(self.root, selectmode=tk.EXTENDED)
         self.listbox.pack(fill=tk.BOTH, expand=True)
 
         # Convert Button
         # -------
         self.convert_button = tk.Button(rt, text="Convert", command=self.convert)
-        self.convert_button.pack(pady=5)
+        self.convert_button.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
 
         # Enable drag and drop
         # -------
@@ -76,15 +81,24 @@ class App:
             self.file_list.append(filename)
             self.update_listbox()
 
+    def clear_list(self):
+        self.file_list = []
+        self.update_listbox()
+
     def update_listbox(self):
         # Clear listbox
         self.listbox.delete(0, tk.END)
+
         # Insert filenames
         for filename in self.file_list:
             self.listbox.insert(tk.END, filename)
 
+        # Update listbox
+        self.listbox.update_idletasks()
+        self.root.update_idletasks()
+
     def drop_event(self, event):
-        # Split the items inside {} in event.data
+        # Get the filenames
         filename = ""
         for c in event.data:
             if c == "{":
@@ -103,15 +117,22 @@ class App:
         self.update_listbox()
 
     def convert(self):
+        # Check if there are files to convert
+        if not self.file_list:
+            messagebox.showwarning("Warning", "No files to convert")
+            return
+
+        # Convert files
         progress_dialog = ProgressDialog(self.root, len(self.file_list))
         for filename in tqdm(self.file_list):
             output_path = os.path.splitext(filename)[0] + ".cbz"
             convert_pdf_to_cbz(filename, output_path)
             progress_dialog.step()
         progress_dialog.destroy()
-        self.file_list = []
-        self.update_listbox()
         messagebox.showinfo("Info", "Conversion finished")
+
+        # Clear list
+        self.clear_list()
 
     @staticmethod
     def about():
