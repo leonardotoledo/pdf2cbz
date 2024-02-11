@@ -1,4 +1,5 @@
 import os.path
+import re
 import tkinter as tk
 import tkinterdnd2 as tkdnd
 from tkinter import ttk
@@ -98,20 +99,30 @@ class App:
         self.root.update_idletasks()
 
     def drop_event(self, event):
-        # Get the filenames
-        filename = ""
-        for c in event.data:
-            if c == "{":
-                filename = ""
-            elif c == "}":
-                # Check if the file is a PDF
-                if filename.endswith(".pdf") or filename.endswith(".PDF"):
-                    self.file_list.append(filename)
-                else:
-                    filename = ""
-                    messagebox.showwarning("Warning", "Only PDF files are supported")
+        # Get the raw string of filenames
+        names = event.data
+
+        # Extract and remove the braced names
+        brace_regex = re.compile(r'\{([^}]*)\}')
+        braced_names = re.findall(brace_regex, names)
+        names = re.sub(brace_regex, "", names)
+
+        # Extract the remaining names
+        filenames = braced_names + names.split(" ")
+
+        # Remove empty strings
+        filenames = list(filter(None, filenames))
+
+        # Order filenames
+        filenames.sort()
+
+        # Add files to the list
+        for filename in filenames:
+            # Check if the file is a PDF
+            if filename.endswith(".pdf") or filename.endswith(".PDF"):
+                self.file_list.append(filename)
             else:
-                filename += c
+                messagebox.showwarning("Warning", f"{filename} is not a PDF file")
 
         # Update the listbox
         self.update_listbox()
